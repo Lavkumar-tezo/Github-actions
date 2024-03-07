@@ -1,0 +1,114 @@
+{
+  "employeeList": [
+    {
+      "img": "./assets/images/profile.webp",
+      "fname": "Rajesh",
+      "lname": "Singh",
+      "email": "rajesh.singh@tezo.com",
+      "location": "HYDERABAD",
+      "dept": "Product Engg",
+      "role": "IN124",
+      "empNo": "TZ876543",
+      "status": "Active",
+      "joiningDate": "12/03/2019",
+      "dob": "17/01/2004",
+      "projectAssigned": "dummy project 1",
+      "managerAssigned": "manager 1",
+      "mobile": 1212121212,
+      "dots": "./assets/icons/three-dot.svg",
+      "id": "1da4"
+    },
+    {
+      "img": "./assets/images/dummy-profile-image.jpg",
+      "fname": "Lisa",
+      "lname": "Smith",
+      "email": "lisa.smith@tezo.com",
+      "location": "USA",
+      "dept": "UI/UX",
+      "role": "IN122",
+      "empNo": "TZ123456",
+      "status": "In Active",
+      "joiningDate": "05/06/2018",
+      "dob": "17/01/2004",
+      "projectAssigned": "dummy project 1",
+      "managerAssigned": "manager 1",
+      "mobile": 1212121212,
+      "dots": "./assets/icons/three-dot.svg",
+      "id": "c422"
+    },
+    {
+      "img": "./assets/images/dummy-profile-image.jpg",
+      "fname": "Emily",
+      "lname": "Jones",
+      "email": "emily.jones@tezo.com",
+      "location": "USA",
+      "dept": "Product Engg",
+      "role": "IN128",
+      "empNo": "TZ345678",
+      "status": "In Active",
+      "joiningDate": "15/07/2017",
+      "dob": "17/01/2004",
+      "projectAssigned": "dummy project 1",
+      "managerAssigned": "manager 1",
+      "mobile": 1212121212,
+      "dots": "./assets/icons/three-dot.svg",
+      "id": "5120"
+    }
+  ],
+  "allRoles": [
+    {
+      "role": "Customer Service Manager",
+      "roleId": "IN125",
+      "desc": "",
+      "dept": "IT",
+      "location": "Hyderabad",
+      "profiles": [],
+      "id": "f3ab"
+    },
+    {
+      "role": "UX Designer",
+      "roleId": "IN128",
+      "desc": "",
+      "dept": "Product Engg",
+      "location": "Hyderabad",
+      "profiles": [],
+      "id": "476f"
+    },
+    {
+      "role": "Assistant Backend Designer",
+      "roleId": "IN130",
+      "desc": "",
+      "dept": "UI/UX",
+      "location": "Hyderabad",
+      "profiles": [],
+      "id": "9a9b"
+    },
+    {
+      "role": "Human Resource Manager",
+      "roleId": "IN135",
+      "desc": "",
+      "dept": "IT",
+      "location": "Hyderabad",
+      "profiles": [],
+      "id": "29e6"
+    },
+    {
+      "role": "Front End Developer",
+      "roleId": "IN124",
+      "desc": "",
+      "dept": "Product Engg",
+      "location": "Hyderabad",
+      "profiles": [],
+      "id": "f736"
+    },
+    {
+      "role": "Senior Developer",
+      "roleId": "IN122",
+      "desc": "",
+      "dept": "UI/UX",
+      "location": "Hyderabad",
+      "profiles": [],
+      "id": "30c0"
+    }
+  ]
+}

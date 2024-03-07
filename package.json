@@ -1,10 +1,15 @@
 {
-  "name":"index",
-  "homepage":"https://lavkumar-tezo.github.io/index",
   "dependencies": {
-    "gh-pages": "^6.1.1"
+    "gh-pages": "^6.1.1",
+    "json-server": "^1.0.0-alpha.23"
   },
   "scripts": {
-    "deploy": "gh-pages -d dist"
-  }
+    "start":"json-server --watch data.json --port 3000"
+  },
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }
