@@ -1,0 +1,10 @@
+{
+  "name":"githubaction",
+  "homepage":"https://lavkumar-tezo.github.io/Github-action",
+  "dependencies": {
+    "gh-pages": "^6.1.1"
+  },
+  "scripts": {
+    "deploy": "gh-pages -d dist"
+  }
+}
