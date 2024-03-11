@@ -4,17 +4,24 @@ var allRoles;
 var employeeList;
 document.addEventListener('DOMContentLoaded', () => {
     updateFilter();
-    employeeList = JSON.parse(localStorage.getItem('employeeList'));
-    allRoles = JSON.parse(localStorage.getItem('roles'));
-    allRoles.forEach(obj => {
-        let roleId = obj.roleId;
-        obj.profiles = [];
-        let filteredEmp = employeeList.filter((obj) => obj.role == roleId);
-        obj.profiles = filteredEmp;
-    });
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', "http://localhost:3000/employeeList", false);
+    xhr.onload = () => { employeeList = JSON.parse(xhr.responseText); };
+    xhr.send();
+    let xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', "http://localhost:3000/allRoles", false);
+    xhr2.onload = () => {
+        allRoles = JSON.parse(xhr2.responseText);
+        allRoles.forEach(role => {
+            let roleId = role.id;
+            role.profiles = [];
+            let filteredEmp = employeeList.filter((employee) => employee.role == roleId);
+            role.profiles = filteredEmp;
+            createRoleCard(role);
+        });
+    };
+    xhr2.send();
     localStorage.removeItem('selectedRole');
-    localStorage.setItem('roles', JSON.stringify(allRoles));
-    allRoles.forEach(role => createRoleCard(role));
     document.querySelector('.reset-btn').addEventListener('click', resetRoleFilter);
     document.querySelector('.add-role-btn').addEventListener('click', () => openAddRoleForm('.add-role-container'));
     document.querySelector('.apply-btn').addEventListener('click', filterSearch);
@@ -92,8 +99,8 @@ export function createRoleCard(data) {
         let minimumProfie = Math.min(data.profiles.length, 4);
         for (let i = 0; i < minimumProfie; i++) {
             const profileImg = document.createElement("img");
-            let profileEmpNo = data.profiles[i].empNo;
-            let emp = employeeList.filter(employee => employee.empNo == profileEmpNo);
+            let profileEmpNo = data.profiles[i].id;
+            let emp = employeeList.filter(employee => employee.id == profileEmpNo);
             if (emp.length == 0) {
                 data.profiles.splice(i, 1);
                 i--;
@@ -133,15 +140,31 @@ export function activateInput(flag = false) {
     allDisabledInputs.forEach(input => document.querySelector(`#${input}`).disabled = flag);
 }
 export function createDivBlock(element) {
-    let selectedRole = JSON.parse(localStorage.getItem('selectedRole'));
-    let selectedRoleTitle = allRoles.filter(obj => obj.role == selectedRole);
-    employeeList.forEach(emp => {
-        if (emp.role == '')
-            createEmployeeDiv(emp, element, false);
-        if ((selectedRoleTitle.length != 0) && (emp.role == selectedRoleTitle[0].roleId)) {
-            createEmployeeDiv(emp, element, true);
+    let selectedRoleTitle = localStorage.getItem('selectedRole');
+    if (selectedRoleTitle)
+        selectedRoleTitle = JSON.parse(selectedRoleTitle);
+    let xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', "http://localhost:3000/employeeList", false);
+    xhr2.onload = function () {
+        employeeList = JSON.parse(this.responseText);
+    };
+    xhr2.send();
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', "http://localhost:3000/allRoles", false);
+    xhr.onload = function () {
+        allRoles = JSON.parse(this.responseText);
+        let selectedRole = allRoles.filter(role => role.role == selectedRoleTitle);
+        if (selectedRole) {
+            employeeList.forEach(emp => {
+                if (emp.role == '')
+                    createEmployeeDiv(emp, element, false);
+                if (selectedRoleTitle && (selectedRoleTitle.length != 0) && (emp.role == selectedRole[0].id)) {
+                    createEmployeeDiv(emp, element, true);
+                }
+            });
         }
-    });
+    };
+    xhr.send();
 }
 function resetRoleFilter() {
     resetFilter();

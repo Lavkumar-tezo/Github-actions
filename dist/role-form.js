@@ -35,34 +35,45 @@ export function closeRoleForm(formClass) {
     activateInput(true);
 }
 export function openEditRoleForm(event, formClass) {
-    var _a, _b;
     openAddRoleForm(formClass);
     let triggredElement = event.target;
     let roleTitle = triggredElement.parentElement.querySelector('.role-title').innerText;
-    allRoles = JSON.parse(localStorage.getItem('roles'));
-    let selectedRoleDetail = allRoles.filter(obj => obj.role == roleTitle);
     localStorage.setItem('selectedRole', JSON.stringify(roleTitle));
     let form = document.querySelector(`${formClass}`);
-    let initialEmp = (_a = selectedRoleDetail[0].profiles) === null || _a === void 0 ? void 0 : _a.length;
-    if (initialEmp)
-        form.querySelector('.added-emp-number').innerText = `${initialEmp} selected`;
-    let editObject = {
-        'edit-role-name': selectedRoleDetail[0].role,
-        'edit-role-dept': selectedRoleDetail[0].dept.toLowerCase(),
-        'edit-role-desc': (_b = selectedRoleDetail[0].desc) === null || _b === void 0 ? void 0 : _b.toLowerCase(),
-        'edit-role-location': selectedRoleDetail[0].location.toLowerCase()
+    let xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', "http://localhost:3000/allRoles", false);
+    xhr2.onload = () => {
+        var _a, _b;
+        allRoles = JSON.parse(xhr2.responseText);
+        let selectedRoleDetail = allRoles.find(obj => obj.role == roleTitle);
+        if (selectedRoleDetail) {
+            localStorage.setItem('selectedRole', JSON.stringify(roleTitle));
+            let initialEmp = (_a = selectedRoleDetail.profiles) === null || _a === void 0 ? void 0 : _a.length;
+            if (initialEmp)
+                form.querySelector('.added-emp-number').innerText = `${initialEmp} selected`;
+            let editObject = {
+                'edit-role-name': selectedRoleDetail.role,
+                'edit-role-dept': selectedRoleDetail.dept.toLowerCase(),
+                'edit-role-desc': (_b = selectedRoleDetail.desc) === null || _b === void 0 ? void 0 : _b.toLowerCase(),
+                'edit-role-location': selectedRoleDetail.location.toLowerCase()
+            };
+            for (const selector in editObject) {
+                const element = document.querySelector(`#${selector}`);
+                (element) ? element.value = editObject[selector] : "";
+            }
+        }
     };
-    for (const selector in editObject) {
-        const element = document.querySelector(`#${selector}`);
-        (element) ? element.value = editObject[selector] : "";
-    }
+    xhr2.send();
     let allEmployeeContainer = form.querySelector('.all-employees');
     allEmployeeContainer.innerHTML = "";
     createDivBlock(allEmployeeContainer);
 }
 function validateField(form, flag = true) {
     let check = 1;
-    allRoles = JSON.parse(localStorage.getItem('roles'));
+    let xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', "http://localhost:3000/allRoles", false);
+    xhr2.onload = () => (allRoles = JSON.parse(xhr2.responseText));
+    xhr2.send();
     const DangerInput = ["role", "dept", "desc", "location",];
     let formInputs = Array.from(form.elements);
     let formInput = formInputs.filter((input) => {
@@ -102,8 +113,14 @@ function validateField(form, flag = true) {
 }
 export function addRole(event, mode) {
     event.preventDefault();
-    employeeList = JSON.parse(localStorage.getItem('employeeList'));
-    allRoles = JSON.parse(localStorage.getItem('roles'));
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', "http://localhost:3000/employeeList", false);
+    xhr.onload = () => { employeeList = JSON.parse(xhr.responseText); };
+    xhr.send();
+    let xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', "http://localhost:3000/allRoles", false);
+    xhr2.onload = () => (allRoles = JSON.parse(xhr2.responseText));
+    xhr2.send();
     let form = (mode == 'add') ? document.querySelector(".add-role") : document.querySelector(".edit-role");
     let check = validateField(form, true);
     if (check == 0)
@@ -128,21 +145,21 @@ export function addRole(event, mode) {
         if (input.checked) {
             let empId = emp.querySelector('.hide').innerText;
             for (let employee of employeeList) {
-                if (employee.empNo == empId) {
+                if (employee.id == empId) {
                     allAllotedEmp.profile.push(employee);
                     break;
                 }
             }
         }
     });
-    let newRoleId = getNewRoleId();
+    let newRoleId = getNewRoleId(allRoles);
     let newRole = {
         role: newFormObject.role,
         dept: newFormObject.dept,
         desc: newFormObject.desc,
         location: newFormObject.location,
         profiles: allAllotedEmp.profile,
-        roleId: newRoleId
+        id: newRoleId,
     };
     if (mode == "edit") {
         let selectedRole = JSON.parse(localStorage.getItem("selectedRole")).toLowerCase();
@@ -151,21 +168,33 @@ export function addRole(event, mode) {
             let roleCardTitle = roleCard.querySelector('.role-title').innerText.toLowerCase();
             (roleCardTitle == selectedRole) ? roleCard.remove() : "";
         });
-        let selectedRoleDetails = allRoles.filter(obj => obj.role.toLowerCase() == selectedRole);
-        let selectedRoleId = selectedRoleDetails[0].roleId;
-        employeeList.forEach((empl) => {
-            if (empl.role == selectedRoleId)
-                empl.role = '';
-        });
-        localStorage.setItem('employeeList', JSON.stringify(employeeList));
-        let newRoles = allRoles.filter(obj => obj.role.toLowerCase() !== selectedRole);
-        allRoles = newRoles;
+        let selectedRoleDetail = allRoles.find((role) => role.role.toLowerCase() == selectedRole);
+        if (selectedRoleDetail) {
+            let xhr2 = new XMLHttpRequest();
+            xhr2.open('DELETE', `http://localhost:3000/allRoles/${selectedRoleDetail.id}`, false);
+            xhr2.onload = () => {
+                let selectedRoleDetails = allRoles.filter(obj => obj.role.toLowerCase() == selectedRole);
+                let selectedRoleId = selectedRoleDetails[0].id;
+                employeeList.forEach((empl) => {
+                    if (empl.role == selectedRoleId) {
+                        empl.role = '';
+                        let xhr = new XMLHttpRequest();
+                        xhr.open('PUT', `http://localhost:3000/employeeList/${empl.id}`, false);
+                        xhr.send(JSON.stringify(empl));
+                    }
+                });
+            };
+            xhr2.send(JSON.stringify(newRole));
+        }
+        addRoleToEmployee(newRoleId, newRole, employeeList);
         localStorage.removeItem("selectedRole");
     }
     createRoleCard(newRole);
     allRoles.push(newRole);
-    addRoleToEmployee(newRoleId, newRole);
-    localStorage.setItem('roles', JSON.stringify(allRoles));
+    let xhr3 = new XMLHttpRequest();
+    xhr3.open('POST', "http://localhost:3000/allRoles", true);
+    xhr3.send(JSON.stringify(newRole));
+    addRoleToEmployee(newRoleId, newRole, employeeList);
     form.reset();
     if (mode == 'add') {
         closeRoleForm('.add-role-container');
@@ -176,25 +205,26 @@ export function addRole(event, mode) {
         createToastMessage('Changes Applied');
     }
 }
-function getNewRoleId() {
-    allRoles = JSON.parse(localStorage.getItem('roles'));
-    let sortedRole = allRoles.sort((a, b) => a.roleId > b.roleId ? 1 : -1);
-    let highestRoleId = sortedRole[sortedRole.length - 1].roleId;
+function getNewRoleId(roles) {
+    let sortedRole = roles.sort((a, b) => a.id > b.id ? 1 : -1);
+    let highestRoleId = sortedRole[sortedRole.length - 1].id;
     let highestRoleNum = highestRoleId.substring(2, highestRoleId.length);
     return `IN${Number(highestRoleNum) + 1}`;
 }
-function addRoleToEmployee(roleId, newRole) {
-    employeeList = JSON.parse(localStorage.getItem('employeeList'));
+function addRoleToEmployee(roleId, newRole, employees) {
+    employeeList = employees;
     if (newRole.profiles) {
         for (let i = 0; i < newRole.profiles.length; i++) {
             let empl = newRole.profiles[i];
             for (let employee of employeeList) {
-                if (employee.empNo == empl.empNo) {
+                if (employee.id == empl.id) {
                     employee.role = roleId;
+                    let xhr = new XMLHttpRequest();
+                    xhr.open('PUT', `http://localhost:3000/employeeList/${employee.id}`, true);
+                    xhr.send(JSON.stringify(employee));
                 }
             }
         }
     }
-    localStorage.setItem('employeeList', JSON.stringify(employeeList));
 }
 //# sourceMappingURL=role-form.js.map

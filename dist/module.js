@@ -66,7 +66,7 @@ export function createEmployeeDiv(employee, main, flag) {
     let img = createNewElementWithAttr('Img', [['src', employee.img], ['alt', 'employee-image']]);
     let span = document.createElement("Span");
     let employeeName = `${employee.fname} ${employee.lname}`;
-    span.textContent = `${employeeName} (${employee.empNo})`;
+    span.textContent = `${employeeName} (${employee.id})`;
     (employeeName.length > 18) ? span.setAttribute('title', employeeName) : span.setAttribute('title', '');
     let input = createNewElementWithAttr('Input', [['type', 'checkbox']]);
     input.checked = flag;
@@ -78,7 +78,7 @@ export function createEmployeeDiv(employee, main, flag) {
     label = addElementToParent(label, detail, input);
     div.appendChild(label);
     let empid = document.createElement("span");
-    empid.innerText = employee.empNo;
+    empid.innerText = employee.id;
     empid.classList.add('hide');
     div.appendChild(empid);
     main.appendChild(div);

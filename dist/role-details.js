@@ -3,22 +3,29 @@ var allRoles;
 var employeeList;
 var selectedRole;
 document.addEventListener('DOMContentLoaded', function () {
-    allRoles = JSON.parse(localStorage.getItem('roles'));
-    employeeList = JSON.parse(localStorage.getItem('employeeList'));
     var params = new URLSearchParams(window.location.search);
     let selectedRoleTitle = params.get("selectedRole");
     let getRole;
-    if (selectedRoleTitle)
-        getRole = allRoles.filter(obj => obj.role == selectedRoleTitle);
-    if (getRole)
-        selectedRole = getRole[0];
-    if (selectedRole && selectedRole.profiles) {
-        for (let obj of selectedRole.profiles) {
-            let empNo = obj.empNo;
-            let emp = employeeList.filter(obj => obj.empNo == empNo);
-            createRoleCard(emp[0]);
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', "http://localhost:3000/employeeList", false);
+    xhr.onload = () => { employeeList = JSON.parse(xhr.responseText); };
+    xhr.send();
+    let xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', "http://localhost:3000/allRoles", false);
+    xhr2.onload = () => {
+        allRoles = JSON.parse(xhr2.responseText);
+        if (selectedRoleTitle)
+            getRole = allRoles.filter(obj => obj.role == selectedRoleTitle);
+        if (getRole)
+            selectedRole = getRole[0];
+        if (selectedRole) {
+            employeeList.forEach(employee => {
+                if (employee.role == selectedRole.id)
+                    createRoleCard(employee);
+            });
         }
-    }
+    };
+    xhr2.send();
     document.querySelector('.add-employee').addEventListener('click', openAddEmployeeForm);
     document.querySelector('.cancel-edit-role').addEventListener('click', closeAddRoleForm);
     document.querySelector('#edit-assign-employees').addEventListener('focus', (event) => {
@@ -53,7 +60,7 @@ function createRoleCard(employee) {
     let deptImage = createNewElementWithAttr('img', [['src', "./assets/icons/emp-id.svg"], ['alt', 'department-id']]);
     departmentIcon.appendChild(deptImage);
     let departmentId = createNewElement('div', ['emp-office-detail']);
-    departmentId.textContent = employee.empNo;
+    departmentId.textContent = employee.id;
     let departmentDetails = createNewElement('div', ["role-department", "d-flex", "w-100", "jus-content-start"]);
     departmentDetails = addElementToParent(departmentDetails, departmentIcon, departmentId);
     let emailIcon = createNewElement('div', ["dept-icon", "d-flex"]);
@@ -89,7 +96,10 @@ function createRoleCard(employee) {
     document.querySelector('.role-card-container').appendChild(cardContainer);
 }
 function createDivBlock(element) {
-    employeeList = JSON.parse(localStorage.getItem('employeeList'));
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', "http://localhost:3000/employeeList", false);
+    xhr.onload = () => { employeeList = JSON.parse(xhr.responseText); };
+    xhr.send();
     employeeList.forEach(emp => (emp.role == '') ? createEmployeeDiv(emp, element, false) : "");
 }
 function openAddEmployeeForm() {
@@ -131,8 +141,14 @@ function closeAddRoleForm() {
 }
 function editRole(event) {
     event.preventDefault();
-    employeeList = JSON.parse(localStorage.getItem('employeeList'));
-    allRoles = JSON.parse(localStorage.getItem('roles'));
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', "http://localhost:3000/employeeList", false);
+    xhr.onload = () => { employeeList = JSON.parse(xhr.responseText); };
+    xhr.send();
+    let xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', "http://localhost:3000/allRoles", false);
+    xhr2.onload = () => (allRoles = JSON.parse(xhr2.responseText));
+    xhr2.send();
     let form = document.querySelector(".edit-role");
     let allotedProfiles = (selectedRole.profiles) ? selectedRole.profiles : [];
     let allEmpList = form.querySelectorAll('.employee-name-img');
@@ -141,25 +157,26 @@ function editRole(event) {
         if (input.checked) {
             let empId = emp.querySelector('.hide').innerText;
             for (let employee of employeeList) {
-                if (employee.empNo == empId) {
-                    employee.role = selectedRole.roleId;
+                if (employee.id == empId) {
+                    employee.role = selectedRole.id;
                     allotedProfiles.push(employee);
+                    let xhr = new XMLHttpRequest();
+                    xhr.open('PUT', `http://localhost:3000/employeeList/${employee.id}`, true);
+                    xhr.send(JSON.stringify(employee));
                     break;
                 }
             }
         }
     });
     selectedRole.profiles = (allotedProfiles) ? allotedProfiles : [];
-    allRoles.forEach(role => (role.roleId == selectedRole.roleId) ? role = selectedRole : "");
-    localStorage.setItem('employeeList', JSON.stringify(employeeList));
-    localStorage.setItem('roles', JSON.stringify(allRoles));
+    allRoles.forEach(role => (role.id == selectedRole.id) ? role = selectedRole : "");
     form.reset();
     createToastMessage('Employee Added');
     document.querySelector('.role-card-container').innerHTML = "";
     if (selectedRole.profiles) {
         for (let obj of selectedRole.profiles) {
-            let empNo = obj.empNo;
-            let emp = employeeList.filter(obj => obj.empNo == empNo);
+            let empNo = obj.id;
+            let emp = employeeList.filter(obj => obj.id == empNo);
             createRoleCard(emp[0]);
         }
     }

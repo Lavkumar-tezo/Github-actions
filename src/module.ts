@@ -1,10 +1,10 @@
 
 export interface EmployeeSample {
-    img: string, fname: string, lname: string, email: string, location: string, dept: string, role?: string, empNo: string, status: string, joiningDate: string, dob: string, projectAssigned: string, managerAssigned: string, mobile: number, dots?: string,
+    img: string,id:string, fname: string, lname: string, email: string, location: string, dept: string, role?: string, status: string, joiningDate: string, dob: string, projectAssigned: string, managerAssigned: string, mobile: number, dots?: string,
 }
 
 export interface RoleSample {
-    role: string, roleId: string, desc?: string, dept: string, location: string, profiles?: EmployeeSample[]
+    role: string, id: string, desc?: string, dept: string, location: string, profiles?: EmployeeSample[]
 }
 
 //  For Object created for adding eventlistners on dom content loading
@@ -88,7 +88,7 @@ export function createEmployeeDiv(employee: EmployeeSample, main: HTMLElement, f
     let img = createNewElementWithAttr('Img', [['src', employee.img], ['alt', 'employee-image']]) as HTMLImageElement
     let span = document.createElement("Span");
     let employeeName:string = `${employee.fname} ${employee.lname}`
-    span.textContent = `${employeeName} (${employee.empNo})`;
+    span.textContent = `${employeeName} (${employee.id})`;
     (employeeName.length > 18) ? span.setAttribute('title', employeeName) : span.setAttribute('title', '')
     let input = createNewElementWithAttr('Input', [['type', 'checkbox']]) as HTMLInputElement;
     input.checked = flag;
@@ -100,7 +100,7 @@ export function createEmployeeDiv(employee: EmployeeSample, main: HTMLElement, f
     label=addElementToParent(label,detail,input)as HTMLLabelElement;
     div.appendChild(label);
     let empid = document.createElement("span");
-    empid.innerText = employee.empNo;
+    empid.innerText = employee.id;
     empid.classList.add('hide');
     div.appendChild(empid);
     main.appendChild(div);

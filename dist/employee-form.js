@@ -7,12 +7,17 @@ export function addRoleOption(form, element) {
     let selectOption = createNewElementWithAttr('option', [['value', ''], ['selected', "true"], ['hidden', "true"]]);
     selectOption.innerText = "Select Role";
     select.appendChild(selectOption);
-    allRoles = JSON.parse(localStorage.getItem('roles'));
-    allRoles.forEach((obj) => {
-        let option = createNewElementWithAttr('option', [['value', obj.role.toLowerCase()]]);
-        option.innerText = obj.role;
-        select.appendChild(option);
-    });
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', 'http://localhost:3000/allRoles', true);
+    xhr.onload = function () {
+        allRoles = JSON.parse(this.responseText);
+        allRoles.forEach((obj) => {
+            let option = createNewElementWithAttr('option', [['value', obj.role.toLowerCase()]]);
+            option.innerText = obj.role;
+            select.appendChild(option);
+        });
+    };
+    xhr.send();
 }
 export function displayImagePreview(inputClass, outputClass) {
     let imageInput2 = document.querySelector(`${inputClass}`);
@@ -40,39 +45,46 @@ export function openEditEmployeeForm(formClass, selectClass, e) {
     let row = selectedRow.parentElement.parentElement.parentElement;
     let empId = row.querySelector('.employee-no').innerText;
     let selectedEmp;
-    employeeList = JSON.parse(localStorage.getItem('employeeList'));
-    for (let i = 0; i < employeeList.length; i++) {
-        if (employeeList[i].empNo == empId) {
-            selectedEmp = employeeList[i];
-            break;
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', 'http://localhost:3000/employeeList', true);
+    xhr.onload = () => {
+        employeeList = JSON.parse(xhr.responseText);
+        if (employeeList) {
+            for (let i = 0; i < employeeList.length; i++) {
+                if (employeeList[i].id == empId) {
+                    selectedEmp = employeeList[i];
+                    break;
+                }
+            }
+            if (selectedEmp) {
+                localStorage.setItem('selectedEmp', JSON.stringify(selectedEmp.id));
+                const setFormData = {
+                    "#edit-empl-no": selectedEmp.id,
+                    "#edit-empl-fname": selectedEmp.fname,
+                    "#edit-empl-lname": selectedEmp.lname,
+                    "#edit-empl-email": selectedEmp.email,
+                    "#edit-empl-mobile": selectedEmp.mobile,
+                    '#edit-emp-location': selectedEmp.location.toLowerCase(),
+                    '#edit-emp-manager': selectedEmp.managerAssigned.toLowerCase(),
+                    '#edit-emp-project': selectedEmp.projectAssigned.toLowerCase(),
+                    '#edit-emp-dept': selectedEmp.dept.toLowerCase(),
+                };
+                for (const selector in setFormData) {
+                    const element = document.querySelector(selector);
+                    (element) ? element.value = setFormData[selector] : "";
+                }
+                let selectedEmpRole = allRoles.filter((role) => role.id == (selectedEmp === null || selectedEmp === void 0 ? void 0 : selectedEmp.role));
+                document.querySelector('#edit-emp-role').value = (selectedEmpRole.length != 0) ? selectedEmpRole[0].role.toLowerCase() : "";
+                let selectedEmpDOB = `${selectedEmp.dob.substring(6, 11)}-${selectedEmp.dob.substring(3, 5)}-${selectedEmp.dob.substring(0, 2)}`;
+                setElementAttribute('#edit-empl-dob', 'value', selectedEmpDOB);
+                let selectedEmpJoinDate = `${selectedEmp.joiningDate.substring(6, 11)}-${selectedEmp.joiningDate.substring(3, 5)}-${selectedEmp.joiningDate.substring(0, 2)}`;
+                setElementAttribute('#edit-empl-join-date', 'value', selectedEmpJoinDate);
+                setElementAttribute('.edit-employee-profile', 'src', selectedEmp.img);
+                activateEmployeeInput(true);
+            }
         }
-    }
-    if (selectedEmp) {
-        localStorage.setItem('selectedEmp', JSON.stringify(selectedEmp.empNo));
-        const setFormData = {
-            "#edit-empl-no": selectedEmp.empNo,
-            "#edit-empl-fname": selectedEmp.fname,
-            "#edit-empl-lname": selectedEmp.lname,
-            "#edit-empl-email": selectedEmp.email,
-            "#edit-empl-mobile": selectedEmp.mobile,
-            '#edit-emp-location': selectedEmp.location.toLowerCase(),
-            '#edit-emp-manager': selectedEmp.managerAssigned.toLowerCase(),
-            '#edit-emp-project': selectedEmp.projectAssigned.toLowerCase(),
-            '#edit-emp-dept': selectedEmp.dept.toLowerCase(),
-        };
-        for (const selector in setFormData) {
-            const element = document.querySelector(selector);
-            (element) ? element.value = setFormData[selector] : "";
-        }
-        let selectedEmpRole = allRoles.filter((role) => role.roleId == (selectedEmp === null || selectedEmp === void 0 ? void 0 : selectedEmp.role));
-        document.querySelector('#edit-emp-role').value = (selectedEmpRole.length != 0) ? selectedEmpRole[0].role.toLowerCase() : "";
-        let selectedEmpDOB = `${selectedEmp.dob.substring(6, 11)}-${selectedEmp.dob.substring(3, 5)}-${selectedEmp.dob.substring(0, 2)}`;
-        setElementAttribute('#edit-empl-dob', 'value', selectedEmpDOB);
-        let selectedEmpJoinDate = `${selectedEmp.joiningDate.substring(6, 11)}-${selectedEmp.joiningDate.substring(3, 5)}-${selectedEmp.joiningDate.substring(0, 2)}`;
-        setElementAttribute('#edit-empl-join-date', 'value', selectedEmpJoinDate);
-        setElementAttribute('.edit-employee-profile', 'src', selectedEmp.img);
-        activateEmployeeInput(true);
-    }
+    };
+    xhr.send();
 }
 export function openEmployeeForm(formClass, selectClass) {
     let elementsToHide = ["employees-container", "alphabet-filter", "reset-filter", "employee-table-container",];
@@ -84,7 +96,10 @@ export function openEmployeeForm(formClass, selectClass) {
     addRoleOption(form, selectClass);
 }
 export function validateField(form, flag = true, mode) {
-    employeeList = JSON.parse(localStorage.getItem('employeeList'));
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', "http://localhost:3000/employeeList", false);
+    xhr.onload = () => { employeeList = JSON.parse(xhr.responseText); };
+    xhr.send();
     const dangerInputName = {
         "img": "Image",
         "fname": "First Name",
@@ -92,7 +107,7 @@ export function validateField(form, flag = true, mode) {
         "email": "Email",
         "location": "Location",
         "dept": "Department",
-        "empNo": "Emp Number",
+        "id": "Id",
         "status": "Status",
         "joiningDate": "Join Date",
         "dob": "Date of Birth",
@@ -104,7 +119,7 @@ export function validateField(form, flag = true, mode) {
     let check = 1;
     for (let key in formInput) {
         let element = formInput[key];
-        if (element.name == 'empNo') {
+        if (element.name == 'id') {
             let empNo = element.value.toUpperCase();
             if (empNo == "") {
                 showValidInput(element, `&#9888; ${dangerInputName[element.name]} is required`, flag);
@@ -120,7 +135,7 @@ export function validateField(form, flag = true, mode) {
             }
             else if (empNo.startsWith("TZ") && mode == 'add') {
                 for (let i = 0; i < employeeList.length; i++) {
-                    if (employeeList[i].empNo == empNo) {
+                    if (employeeList[i].id == empNo) {
                         showValidInput(element, `&#9888;This Emp Number is already taken`, flag);
                         check = 0;
                     }
@@ -182,13 +197,16 @@ export function addEmployee(event, mode) {
             newFormObject[element.name] = (mode == 'add') ? document.querySelector('.employee-profile-img').src : document.querySelector('.edit-employee-profile').src;
         }
         else if (element.name == 'role') {
-            allRoles = JSON.parse(localStorage.getItem('roles'));
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', "http://localhost:3000/allRoles", false);
+            xhr.onload = () => { allRoles = JSON.parse(xhr.responseText); };
+            xhr.send();
             let allotedRoleId = allRoles.filter(function (obj) {
                 if (obj.role.toLowerCase() == element.value.toLowerCase())
-                    return obj.roleId;
+                    return obj.id;
             });
             if (allotedRoleId.length != 0)
-                newFormObject[element.name] = allotedRoleId[0].roleId;
+                newFormObject[element.name] = allotedRoleId[0].id;
             else
                 newFormObject[element.name] = '';
         }
@@ -210,7 +228,7 @@ export function addEmployee(event, mode) {
         email: newFormObject.email,
         location: newFormObject.location.toString().toUpperCase(),
         dept: newFormObject.dept,
-        empNo: newFormObject.empNo,
+        id: newFormObject.id,
         joiningDate: newFormObject.joiningDate.toString().split('-').reverse().join('/'),
         dob: newFormObject.dob,
         projectAssigned: newFormObject.projectAssigned,
@@ -222,11 +240,11 @@ export function addEmployee(event, mode) {
     if (check) {
         if (mode == "edit") {
             let rowId = JSON.parse(localStorage.getItem("selectedEmp"));
-            let rowIndex = employeeList.findIndex(employee => employee.empNo == rowId);
-            document.querySelector('.employee-table-body').deleteRow(rowIndex + 1);
-            let newEmps = employeeList.filter(employee => employee.empNo !== rowId);
+            let newEmps = employeeList.filter(employee => employee.id !== rowId);
             employeeList = newEmps;
-            localStorage.setItem('employeeList', JSON.stringify(employeeList));
+            let xhr = new XMLHttpRequest();
+            xhr.open('DELETE', `http://localhost:3000/employeeList/${rowId}`, true);
+            xhr.send();
             localStorage.removeItem("selectedEmp");
         }
         if (newObject) {
@@ -234,7 +252,9 @@ export function addEmployee(event, mode) {
             employeeList.push(newObject);
         }
         document.querySelector('.final-edit-empl').innerText = 'Edit';
-        localStorage.setItem('employeeList', JSON.stringify(employeeList));
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', `http://localhost:3000/employeeList/`, true);
+        xhr.send(JSON.stringify(newObject));
         if (mode == 'add') {
             closeForm('.employee-form-container', 'select-role');
             createToastMessage('Employee Added');

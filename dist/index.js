@@ -3,23 +3,23 @@ import { createNewElement, createNewElementWithAttr, addElementToParent, updateF
 var employeeList;
 var allRoles;
 window.addEventListener("resize", () => setTableHeight);
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", function () {
     var _a, _b, _c;
-    try {
-        employeeList = await fetch('http://localhost:3000/employeeList').then(res => res.json());
-        console.log(employeeList);
-        allRoles = await fetch('http://localhost:3000/allRoles').then(res => res.json());
-        console.log(allRoles);
-    }
-    catch (err) {
-        console.log(err);
-    }
-    employeeList.forEach(employee => insertEmployee(employee));
+    const xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', "http://localhost:3000/allRoles", true);
+    xhr2.onload = () => allRoles = JSON.parse(xhr2.responseText);
+    xhr2.send();
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', "http://localhost:3000/employeeList", true);
+    xhr.onload = function () {
+        employeeList = JSON.parse(this.responseText);
+        employeeList.forEach(employee => insertEmployee(employee));
+    };
+    xhr.send();
     setTableHeight();
     localStorage.removeItem('selectedEmp');
     localStorage.removeItem('selectedAlpha');
     localStorage.removeItem('deleteRow');
-    checkEmployeeStatus();
     let alphabet = document.querySelectorAll(".alphabet");
     for (let i = 0; i < alphabet.length; i++) {
         alphabet[i].addEventListener("click", (e) => { alphabetSort(e.currentTarget); });
@@ -156,17 +156,21 @@ export async function toggleStatus(e) {
     let selectedCell = e.target;
     let selectedRow = selectedCell.parentElement.parentElement.parentElement;
     let selectedRowEmpId = selectedRow.querySelector('.employee-no').innerText;
-    let selectedEmp = employeeList.find(employee => employee.empNo == selectedRowEmpId);
+    let selectedEmp;
     let statusElement = selectedRow.querySelector(".employee-status-value");
     let isActive = statusElement.innerText === "Active";
     statusElement.innerText = isActive ? "In Active" : "Active";
-    selectedEmp.status = isActive ? "In Active" : "Active";
-    debugger;
-    const response = await fetch(`http://localhost:3000/employeeList`, {
-        method: "POST",
-        body: JSON.stringify(selectedEmp),
+    employeeList.map(employee => {
+        if (employee.id == selectedRowEmpId) {
+            employee.status = isActive ? "In Active" : "Active";
+            selectedEmp = employee;
+        }
     });
-    console.log(response.json());
+    if (selectedEmp) {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", `http://localhost:3000/employeeList/${selectedEmp.id}`, true);
+        xhr.send(JSON.stringify(selectedEmp));
+    }
     statusElement.style.color = isActive ? "red" : "green";
     statusElement.style.backgroundColor = isActive ? "#ffe6e6" : "#E7F4E8";
     selectedCell.parentElement.classList.add("hide");
@@ -221,7 +225,7 @@ export function insertEmployee(employee) {
     if (employee.role) {
         let roleName = '';
         for (let i = 0; i < allRoles.length; i++) {
-            (allRoles[i].roleId == employee.role) ? roleName = allRoles[i].role : "";
+            (allRoles[i].id == employee.role) ? roleName = allRoles[i].role : "";
         }
         roleDiv.textContent = roleName;
     }
@@ -229,10 +233,16 @@ export function insertEmployee(employee) {
         roleDiv.textContent = 'N/A';
     tdRole.appendChild(roleDiv);
     let tdEmpNo = createNewElement('td', ['employee-no']);
-    tdEmpNo.textContent = employee.empNo;
+    tdEmpNo.textContent = employee.id;
     let tdStatus = createNewElement('td', ['employee-status']);
     let spanStatus = createNewElement("span", ["employee-status-value"]);
     spanStatus.textContent = employee.status ? employee.status : "Active";
+    if (spanStatus.textContent.toLowerCase() == "active") {
+    }
+    else {
+        spanStatus.style.color = "red";
+        spanStatus.style.backgroundColor = "#ffe6e6";
+    }
     tdStatus.appendChild(spanStatus);
     let tdJoinDate = createNewElement('td', ['employee-join-dt']);
     tdJoinDate.textContent = employee.joiningDate;
@@ -397,10 +407,14 @@ export function deleteEmployeeRow(e) {
 }
 function deleteEmployee(row) {
     let rowEmpId = row.querySelector(".employee-no").innerText;
-    document.querySelector(".employee-table").deleteRow(row.rowIndex);
-    let newEmps = employeeList.filter(employee => employee.empNo !== rowEmpId);
+    let selectedEmp = employeeList.find(employee => employee.id == rowEmpId);
+    let newEmps = employeeList.filter(employee => employee.id !== rowEmpId);
     employeeList = newEmps;
-    localStorage.setItem('employeeList', JSON.stringify(employeeList));
+    if (selectedEmp) {
+        const xhr = new XMLHttpRequest();
+        xhr.open("DELETE", `http://localhost:3000/employeeList/${selectedEmp.id}`, true);
+        xhr.send();
+    }
 }
 function sortTableByColumn(table, column, asc = true) {
     let dirModifier = asc ? 1 : -1;
